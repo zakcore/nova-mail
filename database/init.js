@@ -44,7 +44,7 @@ async function initialiser({
     user: config.db.user,
     password: config.db.password,
     database: sansCreation ? nomBase : undefined,
-    ssl: config.db.ssl ? { rejectUnauthorized: true } : undefined,
+    ssl: config.db.sslOptions,
     multipleStatements: true,
     charset: 'utf8mb4',
     timezone: 'Z',

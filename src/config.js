@@ -13,6 +13,16 @@ if (missing.length > 0) {
 
 const env = process.env;
 
+// Optional CA certificate for hosted MySQL (Aiven…): PEM text (\n allowed) or a path to a .pem file.
+function lireCertificat(valeur) {
+  if (!valeur) return undefined;
+  if (valeur.includes('-----BEGIN')) return valeur.replace(/\\n/g, '\n');
+  const fs = require('fs');
+  const chemin = path.resolve(__dirname, '..', valeur);
+  if (!fs.existsSync(chemin)) throw new Error(`Configuration : certificat DB_SSL_CA introuvable (${chemin}).`);
+  return fs.readFileSync(chemin, 'utf8');
+}
+
 const config = {
   port: Number(env.PORT) || 3000,
   db: {
@@ -22,6 +32,7 @@ const config = {
     password: env.DB_PASSWORD || '',
     database: env.DB_NAME,
     ssl: env.DB_SSL === 'true',
+    sslCa: lireCertificat(env.DB_SSL_CA),
   },
   jwt: {
     secret: env.JWT_SECRET,
@@ -34,5 +45,10 @@ const config = {
   },
   corsOrigin: env.CORS_ORIGIN || '',
 };
+
+// mysql2 "ssl" option: certificate always verified, against DB_SSL_CA when given.
+config.db.sslOptions = config.db.ssl
+  ? { rejectUnauthorized: true, ...(config.db.sslCa ? { ca: config.db.sslCa } : {}) }
+  : undefined;
 
 module.exports = config;

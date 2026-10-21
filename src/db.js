@@ -8,7 +8,7 @@ const pool = mysql.createPool({
   user: config.db.user,
   password: config.db.password,
   database: config.db.database,
-  ssl: config.db.ssl ? { rejectUnauthorized: true } : undefined,
+  ssl: config.db.sslOptions,
   timezone: 'Z',
   charset: 'utf8mb4',
   connectionLimit: 10,
