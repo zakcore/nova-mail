@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Dossier – Nova Mail</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <script src="js/ui.js" defer></script>
+  <script type="module" src="js/pages/dossier.js"></script>
+</head>
+<body>
+  <div class="app-frame">
+    <header class="app-header">
+      <button type="button" class="menu-toggle" aria-label="Ouvrir le menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+      <span class="app-brand">Nova Mail</span>
+      <div class="user-badge">
+        <span class="user-name" id="user-name"></span>
+        <span class="avatar avatar-32" id="user-avatar" aria-hidden="true"></span>
+      </div>
+    </header>
+    <nav class="sidebar" id="sidebar" aria-label="Navigation principale">
+      <ul class="sidebar-menu">
+          <li><a class="sidebar-link" href="nouveau.html" data-nav="nouveau">Nouveau message</a></li>
+          <li><a class="sidebar-link" href="reception.html" data-nav="reception">Réception <span class="badge-count" id="count-reception" hidden></span></a></li>
+          <li><a class="sidebar-link" href="envoyes.html" data-nav="envoyes">Envoyés</a></li>
+      </ul>
+      <p class="sidebar-section-title" id="folders-title">Dossiers</p>
+      <ul class="sidebar-menu sidebar-folders" id="folder-list" aria-labelledby="folders-title"></ul>
+      <button type="button" class="sidebar-add" data-open-modal="modal-new-folder">+ Nouveau dossier</button>
+      <ul class="sidebar-menu">
+          <li><a class="sidebar-link" href="contacts.html" data-nav="contacts">Contacts</a></li>
+          <li><a class="sidebar-link" href="profil.html" data-nav="profil">Profil</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <a class="sidebar-link" href="index.html" id="logout-link">Déconnexion</a>
+      </div>
+    </nav>
+    <main class="app-main">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title" id="folder-title">Chargement…</h1>
+          <p class="page-subtitle" id="folder-subtitle"></p>
+        </div>
+        <button type="button" class="btn btn-danger" id="btn-delete-folder" hidden>Supprimer le dossier</button>
+      </div>
+
+      <div class="message-table message-table--inbox">
+        <div class="message-table-head" aria-hidden="true">
+          <span></span>
+          <span>Expéditeur / Destinataire</span>
+          <span>Objet</span>
+          <span>Date</span>
+          <span class="cell-state">État</span>
+          <span></span>
+        </div>
+        <ul id="message-list" aria-label="Messages" aria-busy="true"></ul>
+      </div>
+
+      <template id="message-row-template">
+        <li class="message-row">
+          <a class="message-row-link" href="message.html">
+            <span class="message-cell cell-dot" aria-hidden="true"></span>
+            <span class="message-cell cell-from"></span>
+            <span class="message-cell cell-subject"><span class="subject"></span><span class="attach" hidden><span aria-hidden="true">📎</span><span class="visually-hidden">Pièce jointe</span></span> <span class="excerpt"></span></span>
+            <span class="message-cell cell-date"></span>
+            <span class="message-cell cell-state"></span>
+          </a>
+          <button type="button" class="row-action"></button>
+        </li>
+      </template>
+
+      <nav class="pagination" id="pagination" aria-label="Pagination" hidden>
+        <button type="button" class="pagination-btn" data-page="precedent" disabled>‹ Précédent</button>
+        <span aria-hidden="true">·</span>
+        <span class="pagination-info"></span>
+        <span aria-hidden="true">·</span>
+        <button type="button" class="pagination-btn" data-page="suivant" disabled>Suivant ›</button>
+      </nav>
+    </main>
+  </div>
+
+  <div class="modal" id="modal-new-folder" role="dialog" aria-modal="true" aria-labelledby="modal-new-folder-title">
+    <form class="modal-panel" id="new-folder-form" novalidate>
+      <h2 class="modal-title" id="modal-new-folder-title">Nouveau dossier</h2>
+      <div class="field">
+        <label class="field-label" for="new-folder-name">Nom du dossier *</label>
+        <input class="input" type="text" id="new-folder-name" name="nom" maxlength="80" autocomplete="off">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" data-close-modal>Annuler</button>
+        <button type="submit" class="btn btn-primary">Créer</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="modal" id="modal-confirm" role="dialog" aria-modal="true" aria-labelledby="modal-confirm-title" aria-describedby="modal-confirm-text">
+    <div class="modal-panel">
+      <h2 class="modal-title" id="modal-confirm-title"></h2>
+      <p id="modal-confirm-text"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" data-close-modal>Annuler</button>
+        <button type="button" class="btn btn-danger-solid" id="modal-confirm-ok">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

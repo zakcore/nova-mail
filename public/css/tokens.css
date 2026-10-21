@@ -1,0 +1,35 @@
+/* Design tokens – the only place where colors and sizes are defined. */
+:root {
+  --color-page-bg:        #f3f6fa;
+  --color-surface:        #ffffff;
+  --color-header-bg:      #eef2f7;
+  --color-sidebar-bg:     #e9eef6;
+  --color-sidebar-active: #dbe7f7;
+  --color-table-head:     #eef2f7;
+  --color-row-hover:      #f7f9fc;
+  --color-border:         #c9d3de;
+  --color-text:           #1e2a38;
+  --color-text-muted:     #5a6673;
+  --color-primary:        #1f3b5a;
+  --color-primary-hover:  #16304a;
+  --color-danger:         #a12d2d;
+
+  /* Additions needed by the components (kept here so no color is hard-coded elsewhere) */
+  --color-on-primary:     #ffffff;
+  --color-danger-hover:   #862424;
+  --color-backdrop:       rgba(30, 42, 56, 0.55);
+  --shadow-modal:         0 16px 48px rgba(30, 42, 56, 0.28);
+
+  --font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+  --font-size-base: 14px;
+  --font-size-small: 12px;
+  --font-size-title: 22px;
+
+  --radius: 8px;
+  --radius-small: 6px;
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px;
+  --space-4: 16px; --space-5: 24px; --space-6: 32px;
+
+  --sidebar-width: 190px;
+  --header-height: 52px;
+}

@@ -1,0 +1,1855 @@
+{
+  "info": {
+    "name": "Nova Mail – Services web",
+    "description": "Les 24 services web de Nova Mail (SW-01 à SW-24), à exécuter dans l'ordre avec le Collection Runner juste après `npm run db:init`.\n\nLa collection peut être relancée sans réinitialiser la base : les courriels, noms de dossier et objets sont générés avec Date.now(), et tout ce qui est créé est supprimé par une requête suivante (sauf le compte de test créé par SW-01).\n\nSW-23 envoie le fichier postman/fichiers/exemple.pdf du dépôt. Dans l'application Postman, il peut être nécessaire de sélectionner ce fichier à nouveau dans l'onglet Body de la requête SW-23.\n\nLigne de commande : npx newman run postman/nova-mail.postman_collection.json -e postman/nova-mail.postman_environment.json",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jeton}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "nouveauCourriel",
+      "value": ""
+    },
+    {
+      "key": "contactCourriel",
+      "value": ""
+    },
+    {
+      "key": "idContact",
+      "value": ""
+    },
+    {
+      "key": "nomDossier",
+      "value": ""
+    },
+    {
+      "key": "idDossier",
+      "value": ""
+    },
+    {
+      "key": "idPieceTemp",
+      "value": ""
+    },
+    {
+      "key": "objetMessage",
+      "value": ""
+    },
+    {
+      "key": "idMessageEnvoye",
+      "value": ""
+    },
+    {
+      "key": "idPiece",
+      "value": ""
+    },
+    {
+      "key": "idMessageSophie",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Comptes et authentification",
+      "item": [
+        {
+          "name": "SW-01 – Créer un compte",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/utilisateurs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "utilisateurs"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courriel\": \"{{nouveauCourriel}}\",\n  \"motDePasse\": \"Postman2026!\",\n  \"nom\": \"Postman\",\n  \"prenom\": \"Test\",\n  \"telephone\": \"+1 514 555-0000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"nouveauCourriel\", \"postman.\" + Date.now() + \"@example.com\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 201\", () => pm.response.to.have.status(201));",
+                  "const u = pm.response.json();",
+                  "pm.test(\"Utilisateur créé\", () => {",
+                  "    pm.expect(u.courriel).to.eql(pm.collectionVariables.get(\"nouveauCourriel\"));",
+                  "    pm.expect(u.idUtilisateur).to.be.a(\"number\");",
+                  "    pm.expect(u).to.not.have.property(\"motDePasseHash\");",
+                  "});",
+                  "pm.test(\"En-tête Location\", () => pm.expect(pm.response.headers.get(\"Location\")).to.eql(\"/api/v1/utilisateurs/moi\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-01 – Créer un compte (courriel existant, 409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/utilisateurs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "utilisateurs"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courriel\": \"{{nouveauCourriel}}\",\n  \"motDePasse\": \"Postman2026!\",\n  \"nom\": \"Postman\",\n  \"prenom\": \"Test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Code d'erreur COURRIEL_DEJA_UTILISE\", () => pm.expect(pm.response.json().erreur.code).to.eql(\"COURRIEL_DEJA_UTILISE\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-02 – Se connecter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/connexion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "connexion"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courriel\": \"alex.moreau@example.com\",\n  \"motDePasse\": \"Nova2026!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Jeton reçu\", () => {",
+                  "    pm.expect(r.jeton).to.be.a(\"string\");",
+                  "    pm.expect(r.typeJeton).to.eql(\"Bearer\");",
+                  "    pm.expect(r.utilisateur.courriel).to.eql(\"alex.moreau@example.com\");",
+                  "});",
+                  "pm.environment.set(\"jeton\", r.jeton);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-02 – Se connecter (mauvais mot de passe, 401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/connexion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "connexion"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courriel\": \"alex.moreau@example.com\",\n  \"motDePasse\": \"Mauvais2026!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Code d'erreur IDENTIFIANTS_INVALIDES\", () => pm.expect(pm.response.json().erreur.code).to.eql(\"IDENTIFIANTS_INVALIDES\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-02 – Se connecter (nouveau compte)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/connexion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "connexion"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courriel\": \"{{nouveauCourriel}}\",\n  \"motDePasse\": \"Postman2026!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.environment.set(\"jetonNouveau\", pm.response.json().jeton);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-04 – Consulter son profil",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/utilisateurs/moi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "utilisateurs",
+                "moi"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const u = pm.response.json();",
+                  "pm.test(\"Profil d'Alex sans mot de passe\", () => {",
+                  "    pm.expect(u.courriel).to.eql(\"alex.moreau@example.com\");",
+                  "    pm.expect(u).to.have.all.keys(\"idUtilisateur\", \"courriel\", \"nom\", \"prenom\", \"photoProfil\", \"telephone\", \"creeLe\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-05 – Modifier son profil",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/utilisateurs/moi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "utilisateurs",
+                "moi"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Postman\",\n  \"prenom\": \"Modifié\",\n  \"telephone\": \"+1 438 555-0000\",\n  \"photoProfil\": \"https://exemple.com/photo.png\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jetonNouveau}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const u = pm.response.json();",
+                  "pm.test(\"Profil modifié\", () => {",
+                  "    pm.expect(u.prenom).to.eql(\"Modifié\");",
+                  "    pm.expect(u.telephone).to.eql(\"+1 438 555-0000\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-06 – Changer son mot de passe",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/utilisateurs/moi/mot-de-passe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "utilisateurs",
+                "moi",
+                "mot-de-passe"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ancienMotDePasse\": \"Postman2026!\",\n  \"nouveauMotDePasse\": \"Postman2027!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jetonNouveau}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-06 – Changer son mot de passe (ancien incorrect, 401)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/utilisateurs/moi/mot-de-passe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "utilisateurs",
+                "moi",
+                "mot-de-passe"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ancienMotDePasse\": \"Postman2026!\",\n  \"nouveauMotDePasse\": \"Postman2028!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jetonNouveau}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Code d'erreur MOT_DE_PASSE_INCORRECT\", () => pm.expect(pm.response.json().erreur.code).to.eql(\"MOT_DE_PASSE_INCORRECT\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Contacts",
+      "item": [
+        {
+          "name": "SW-07 – Créer un contact",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/contacts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "contacts"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Tremblay\",\n  \"prenom\": \"Julie\",\n  \"courriel\": \"{{contactCourriel}}\",\n  \"photoProfil\": \"https://exemple.com/julie.jpg\",\n  \"telephones\": {\n    \"mobile\": \"+1 438 555-0106\",\n    \"fixe\": \"+1 514 555-0106\",\n    \"professionnel\": \"+1 450 555-0106\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"contactCourriel\", \"contact.\" + Date.now() + \"@example.net\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 201\", () => pm.response.to.have.status(201));",
+                  "const c = pm.response.json();",
+                  "pm.test(\"Contact créé avec ses trois téléphones\", () => {",
+                  "    pm.expect(c.idContact).to.be.a(\"number\");",
+                  "    pm.expect(c.telephones).to.eql({ mobile: \"+1 438 555-0106\", fixe: \"+1 514 555-0106\", professionnel: \"+1 450 555-0106\" });",
+                  "});",
+                  "pm.collectionVariables.set(\"idContact\", c.idContact);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-07 – Créer un contact (courriel existant, 409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/contacts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "contacts"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Tremblay\",\n  \"prenom\": \"Julie\",\n  \"courriel\": \"{{contactCourriel}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Code d'erreur CONTACT_EXISTANT\", () => pm.expect(pm.response.json().erreur.code).to.eql(\"CONTACT_EXISTANT\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-08 – Lister les contacts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/contacts?tri=nom&page=1&taille=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "contacts"
+              ],
+              "query": [
+                {
+                  "key": "tri",
+                  "value": "nom"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "taille",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Enveloppe paginée\", () => {",
+                  "    pm.expect(r.donnees).to.be.an(\"array\");",
+                  "    pm.expect(r.pagination).to.have.all.keys(\"page\", \"taille\", \"total\", \"nbPages\");",
+                  "    pm.expect(r.pagination.total).to.be.at.least(10);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-09 – Consulter un contact",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/contacts/{{idContact}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "contacts",
+                "{{idContact}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Bon contact\", () => pm.expect(pm.response.json().courriel).to.eql(pm.collectionVariables.get(\"contactCourriel\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-10 – Modifier un contact",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/contacts/{{idContact}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "contacts",
+                "{{idContact}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Tremblay\",\n  \"prenom\": \"Julie-Anne\",\n  \"courriel\": \"{{contactCourriel}}\",\n  \"telephones\": {\n    \"mobile\": \"+1 438 555-0199\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const c = pm.response.json();",
+                  "pm.test(\"Remplacement complet\", () => {",
+                  "    pm.expect(c.prenom).to.eql(\"Julie-Anne\");",
+                  "    pm.expect(c.photoProfil).to.eql(null);",
+                  "    pm.expect(c.telephones).to.eql({ mobile: \"+1 438 555-0199\", fixe: null, professionnel: null });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-11 – Supprimer un contact",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/contacts/{{idContact}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "contacts",
+                "{{idContact}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-09 – Consulter un contact (supprimé, 404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/contacts/{{idContact}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "contacts",
+                "{{idContact}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Code d'erreur RESSOURCE_INTROUVABLE\", () => pm.expect(pm.response.json().erreur.code).to.eql(\"RESSOURCE_INTROUVABLE\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Dossiers",
+      "item": [
+        {
+          "name": "SW-12 – Créer un dossier",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dossiers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dossiers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"{{nomDossier}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"nomDossier\", \"Postman \" + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 201\", () => pm.response.to.have.status(201));",
+                  "const d = pm.response.json();",
+                  "pm.test(\"Dossier personnel vide\", () => {",
+                  "    pm.expect(d.type).to.eql(\"personnel\");",
+                  "    pm.expect(d.nbMessages).to.eql(0);",
+                  "});",
+                  "pm.collectionVariables.set(\"idDossier\", d.idDossier);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-12 – Créer un dossier (nom réservé, 409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/dossiers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dossiers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Archives\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Code d'erreur DOSSIER_EXISTANT\", () => pm.expect(pm.response.json().erreur.code).to.eql(\"DOSSIER_EXISTANT\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-13 – Lister les dossiers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dossiers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dossiers"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json().donnees;",
+                  "pm.test(\"Dossiers système en premier\", () => {",
+                  "    pm.expect(d.slice(0, 3).map(x => x.nom)).to.eql([\"Réception\", \"Envoyés\", \"Archives\"]);",
+                  "    pm.expect(d[0]).to.have.all.keys(\"idDossier\", \"nom\", \"type\", \"nbMessages\", \"nbNonLus\");",
+                  "});",
+                  "pm.test(\"Le nouveau dossier est listé\", () => pm.expect(d.map(x => x.idDossier)).to.include(pm.collectionVariables.get(\"idDossier\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-16 – Ajouter un message à un dossier",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dossiers/{{idDossier}}/messages/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dossiers",
+                "{{idDossier}}",
+                "messages",
+                "1"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-16 – Ajouter un message à un dossier (reçu vers Envoyés, 400)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dossiers/2/messages/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dossiers",
+                "2",
+                "messages",
+                "1"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Code d'erreur DEPLACEMENT_INVALIDE\", () => pm.expect(pm.response.json().erreur.code).to.eql(\"DEPLACEMENT_INVALIDE\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-15 – Afficher le contenu d'un dossier",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dossiers/{{idDossier}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dossiers",
+                "{{idDossier}}",
+                "messages"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Contenu du dossier\", () => {",
+                  "    pm.expect(r.dossier.nom).to.eql(pm.collectionVariables.get(\"nomDossier\"));",
+                  "    pm.expect(r.donnees.map(m => m.idMessage)).to.eql([1]);",
+                  "    pm.expect(r.pagination.total).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-14 – Supprimer un dossier",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dossiers/{{idDossier}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dossiers",
+                "{{idDossier}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-14 – Supprimer un dossier (système, 403)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dossiers/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dossiers",
+                "1"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Code d'erreur DOSSIER_SYSTEME\", () => pm.expect(pm.response.json().erreur.code).to.eql(\"DOSSIER_SYSTEME\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "SW-18 – Lister les messages reçus",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/messages?boite=reception&page=1&taille=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "boite",
+                  "value": "reception"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "taille",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Messages reçus\", () => {",
+                  "    pm.expect(r.donnees.length).to.be.above(0);",
+                  "    pm.expect(r.donnees.every(m => m.direction === \"recu\")).to.be.true;",
+                  "    pm.expect(r.donnees[0]).to.include.keys(\"idMessage\", \"expediteur\", \"objet\", \"extrait\", \"etat\", \"envoyeLe\", \"nbPiecesJointes\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-18 – Lister les messages reçus (non lus)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/messages?boite=reception&etat=nonlu",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "boite",
+                  "value": "reception"
+                },
+                {
+                  "key": "etat",
+                  "value": "nonlu"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Uniquement des non lus\", () => pm.expect(pm.response.json().donnees.every(m => m.etat === \"recu\")).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-19 – Lister les messages envoyés",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/messages?boite=envoi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "boite",
+                  "value": "envoi"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const r = pm.response.json();",
+                  "pm.test(\"Messages envoyés\", () => {",
+                  "    pm.expect(r.pagination.total).to.be.at.least(10);",
+                  "    pm.expect(r.donnees.every(m => m.etat === \"envoye\")).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-20 – Consulter un message",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/messages/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messages",
+                "1"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const m = pm.response.json();",
+                  "pm.test(\"Message complet\", () => {",
+                  "    pm.expect(m.idMessage).to.eql(1);",
+                  "    pm.expect(m.contenu).to.be.a(\"string\");",
+                  "    pm.expect(m.piecesJointes).to.be.an(\"array\");",
+                  "    pm.expect(m.idDossier).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-21 – Marquer comme non lu",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/messages/1/etat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messages",
+                "1",
+                "etat"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lu\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"État recu\", () => pm.expect(pm.response.json()).to.eql({ idMessage: 1, etat: \"recu\" }));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-21 – Marquer comme lu",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/messages/1/etat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messages",
+                "1",
+                "etat"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lu\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"État lu (état d'origine)\", () => pm.expect(pm.response.json()).to.eql({ idMessage: 1, etat: \"lu\" }));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-21 – Marquer comme lu (message envoyé, 400)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/messages/21/etat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messages",
+                "21",
+                "etat"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lu\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Code d'erreur ETAT_NON_APPLICABLE\", () => pm.expect(pm.response.json().erreur.code).to.eql(\"ETAT_NON_APPLICABLE\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pièces jointes et envoi",
+      "item": [
+        {
+          "name": "SW-23 – Téléverser une pièce jointe",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/pieces-jointes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "pieces-jointes"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "fichier",
+                  "type": "file",
+                  "src": "postman/fichiers/exemple.pdf"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 201\", () => pm.response.to.have.status(201));",
+                  "const p = pm.response.json();",
+                  "pm.test(\"Pièce en attente\", () => {",
+                  "    pm.expect(p.idPiece).to.be.a(\"string\");",
+                  "    pm.expect(p.nomFichier).to.eql(\"exemple.pdf\");",
+                  "    pm.expect(p.typeMime).to.eql(\"application/pdf\");",
+                  "});",
+                  "pm.collectionVariables.set(\"idPieceTemp\", p.idPiece);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-17 – Envoyer un message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"destinataires\": [\n    \"sophie.martin@example.com\"\n  ],\n  \"objet\": \"{{objetMessage}}\",\n  \"contenu\": \"Bonjour Sophie,\\nvoici le document.\",\n  \"piecesJointes\": [\n    \"{{idPieceTemp}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"objetMessage\", \"Postman \" + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 201\", () => pm.response.to.have.status(201));",
+                  "const m = pm.response.json();",
+                  "pm.test(\"Copie envoyée avec la pièce jointe\", () => {",
+                  "    pm.expect(m.direction).to.eql(\"envoye\");",
+                  "    pm.expect(m.destinataire.courriel).to.eql(\"sophie.martin@example.com\");",
+                  "    pm.expect(m.nbPiecesJointes).to.eql(1);",
+                  "    pm.expect(m.idsMessages).to.eql([m.idMessage]);",
+                  "});",
+                  "pm.collectionVariables.set(\"idMessageEnvoye\", m.idMessage);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-17 – Envoyer un message (sans destinataire, 400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"destinataires\": [],\n  \"objet\": \"X\",\n  \"contenu\": \"Y\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Code d'erreur VALIDATION_ECHOUEE\", () => pm.expect(pm.response.json().erreur.code).to.eql(\"VALIDATION_ECHOUEE\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-20 – Consulter un message (avec pièce jointe)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/messages/{{idMessageEnvoye}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messages",
+                "{{idMessageEnvoye}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const pj = pm.response.json().piecesJointes;",
+                  "pm.test(\"Une pièce jointe\", () => {",
+                  "    pm.expect(pj).to.have.lengthOf(1);",
+                  "    pm.expect(pj[0].url).to.match(/^\\/api\\/v1\\/messages\\/\\d+\\/pieces-jointes\\/\\d+$/);",
+                  "});",
+                  "pm.collectionVariables.set(\"idPiece\", pj[0].idPiece);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-24 – Télécharger une pièce jointe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/messages/{{idMessageEnvoye}}/pieces-jointes/{{idPiece}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messages",
+                "{{idMessageEnvoye}}",
+                "pieces-jointes",
+                "{{idPiece}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Fichier PDF\", () => {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/pdf\");",
+                  "    pm.expect(pm.response.headers.get(\"Content-Disposition\")).to.include(\"exemple.pdf\");",
+                  "    pm.expect(pm.response.text()).to.include(\"%PDF\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-02 – Se connecter (Sophie)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/connexion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "connexion"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courriel\": \"sophie.martin@example.com\",\n  \"motDePasse\": \"Nova2026!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.environment.set(\"jetonSophie\", pm.response.json().jeton);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-18 – Lister les messages reçus (Sophie)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/messages?boite=reception&recherche={{objetMessage}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "boite",
+                  "value": "reception"
+                },
+                {
+                  "key": "recherche",
+                  "value": "{{objetMessage}}"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jetonSophie}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "const m = pm.response.json().donnees;",
+                  "pm.test(\"Sophie a reçu le message non lu avec la pièce jointe\", () => {",
+                  "    pm.expect(m).to.have.lengthOf(1);",
+                  "    pm.expect(m[0].etat).to.eql(\"recu\");",
+                  "    pm.expect(m[0].nbPiecesJointes).to.eql(1);",
+                  "});",
+                  "pm.collectionVariables.set(\"idMessageSophie\", m[0].idMessage);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-22 – Supprimer un message",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/messages/{{idMessageEnvoye}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messages",
+                "{{idMessageEnvoye}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-22 – Supprimer un message (copie de Sophie)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/messages/{{idMessageSophie}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messages",
+                "{{idMessageSophie}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jetonSophie}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-20 – Consulter un message (supprimé, 404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/messages/{{idMessageEnvoye}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messages",
+                "{{idMessageEnvoye}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Code d'erreur RESSOURCE_INTROUVABLE\", () => pm.expect(pm.response.json().erreur.code).to.eql(\"RESSOURCE_INTROUVABLE\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Déconnexion",
+      "item": [
+        {
+          "name": "SW-03 – Se déconnecter",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/deconnexion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "deconnexion"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SW-04 – Consulter son profil (jeton révoqué, 401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/utilisateurs/moi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "utilisateurs",
+                "moi"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Code d'erreur JETON_INVALIDE\", () => pm.expect(pm.response.json().erreur.code).to.eql(\"JETON_INVALIDE\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Mon profil – Nova Mail</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <script src="js/ui.js" defer></script>
+  <script type="module" src="js/pages/profil.js"></script>
+</head>
+<body>
+  <div class="app-frame">
+    <header class="app-header">
+      <button type="button" class="menu-toggle" aria-label="Ouvrir le menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+      <span class="app-brand">Nova Mail</span>
+      <div class="user-badge">
+        <span class="user-name" id="user-name"></span>
+        <span class="avatar avatar-32" id="user-avatar" aria-hidden="true"></span>
+      </div>
+    </header>
+    <nav class="sidebar" id="sidebar" aria-label="Navigation principale">
+      <ul class="sidebar-menu">
+          <li><a class="sidebar-link" href="nouveau.html" data-nav="nouveau">Nouveau message</a></li>
+          <li><a class="sidebar-link" href="reception.html" data-nav="reception">Réception <span class="badge-count" id="count-reception" hidden></span></a></li>
+          <li><a class="sidebar-link" href="envoyes.html" data-nav="envoyes">Envoyés</a></li>
+      </ul>
+      <p class="sidebar-section-title" id="folders-title">Dossiers</p>
+      <ul class="sidebar-menu sidebar-folders" id="folder-list" aria-labelledby="folders-title"></ul>
+      <button type="button" class="sidebar-add" data-open-modal="modal-new-folder">+ Nouveau dossier</button>
+      <ul class="sidebar-menu">
+          <li><a class="sidebar-link" href="contacts.html" data-nav="contacts">Contacts</a></li>
+          <li><a class="sidebar-link is-active" aria-current="page" href="profil.html" data-nav="profil">Profil</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <a class="sidebar-link" href="index.html" id="logout-link">Déconnexion</a>
+      </div>
+    </nav>
+    <main class="app-main">
+      <div class="page-head">
+        <h1 class="page-title">Mon profil</h1>
+      </div>
+
+      <p class="list-state" id="profile-loading">Chargement…</p>
+
+      <form class="profile-form" id="profile-form" novalidate hidden>
+        <div class="photo-field">
+          <span class="avatar avatar-80" id="profile-avatar" aria-hidden="true"></span>
+          <button type="button" class="btn btn-secondary btn-small" id="btn-change-photo">Changer la photo</button>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label class="field-label" for="profile-prenom">Prénom *</label>
+            <input class="input" type="text" id="profile-prenom" name="prenom" maxlength="80">
+          </div>
+          <div class="field">
+            <label class="field-label" for="profile-nom">Nom *</label>
+            <input class="input" type="text" id="profile-nom" name="nom" maxlength="80">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="profile-courriel">Courriel</label>
+          <input class="input" type="email" id="profile-courriel" name="courriel" readonly aria-describedby="profile-courriel-help">
+          <p class="field-help" id="profile-courriel-help">Le courriel ne peut pas être modifié.</p>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="profile-telephone">Téléphone</label>
+          <input class="input" type="tel" id="profile-telephone" name="telephone">
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="profile-photo">URL de la photo</label>
+          <input class="input" type="url" id="profile-photo" name="photoProfil" maxlength="255" placeholder="https://…">
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="btn-save-profile" disabled>Enregistrer</button>
+          <button type="button" class="btn btn-secondary" data-open-modal="modal-password">CHANGER MOT DE PASSE</button>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <div class="modal" id="modal-new-folder" role="dialog" aria-modal="true" aria-labelledby="modal-new-folder-title">
+    <form class="modal-panel" id="new-folder-form" novalidate>
+      <h2 class="modal-title" id="modal-new-folder-title">Nouveau dossier</h2>
+      <div class="field">
+        <label class="field-label" for="new-folder-name">Nom du dossier *</label>
+        <input class="input" type="text" id="new-folder-name" name="nom" maxlength="80" autocomplete="off">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" data-close-modal>Annuler</button>
+        <button type="submit" class="btn btn-primary">Créer</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="modal" id="modal-password" role="dialog" aria-modal="true" aria-labelledby="modal-password-title">
+    <form class="modal-panel" id="password-form" novalidate>
+      <h2 class="modal-title" id="modal-password-title">Changer le mot de passe</h2>
+      <div class="field">
+        <label class="field-label" for="password-current">Mot de passe actuel *</label>
+        <input class="input" type="password" id="password-current" name="ancienMotDePasse" autocomplete="current-password">
+      </div>
+      <div class="field">
+        <label class="field-label" for="password-new">Nouveau mot de passe *</label>
+        <input class="input" type="password" id="password-new" name="nouveauMotDePasse" autocomplete="new-password" aria-describedby="password-new-help">
+        <p class="field-help" id="password-new-help">8 caractères minimum, avec une majuscule, une minuscule et un chiffre.</p>
+      </div>
+      <div class="field">
+        <label class="field-label" for="password-confirm">Confirmer le nouveau mot de passe *</label>
+        <input class="input" type="password" id="password-confirm" name="confirmation" autocomplete="new-password">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" data-close-modal>Annuler</button>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

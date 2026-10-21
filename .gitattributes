@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.pdf binary
+# keep the MySQL script byte-identical to the original deliverable (CRLF)
+database/script_mysql.sql -text

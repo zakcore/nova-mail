@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Connexion – Nova Mail</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <script type="module" src="js/pages/login.js"></script>
+</head>
+<body>
+  <main class="auth-page">
+    <h1 class="auth-brand">Nova Mail</h1>
+    <p class="auth-subtitle">Connectez-vous à votre messagerie</p>
+
+    <div class="auth-cards">
+      <section class="card" aria-labelledby="login-title">
+        <h2 class="card-title" id="login-title">Connexion</h2>
+        <p class="form-notice" id="session-expired" role="status" hidden>Votre session a expiré. Veuillez vous reconnecter.</p>
+        <form id="login-form" novalidate>
+          <div class="field">
+            <label class="field-label" for="login-courriel">Adresse courriel *</label>
+            <input class="input" type="email" id="login-courriel" name="courriel" autocomplete="email">
+          </div>
+          <div class="field">
+            <label class="field-label" for="login-password">Mot de passe *</label>
+            <input class="input" type="password" id="login-password" name="motDePasse" autocomplete="current-password">
+          </div>
+          <p class="form-alert" id="login-error" role="alert" hidden></p>
+          <button type="submit" class="btn btn-primary btn-block">Se connecter</button>
+        </form>
+      </section>
+
+      <section class="card" aria-labelledby="signup-title">
+        <h2 class="card-title" id="signup-title">Créer un compte</h2>
+        <form id="signup-form" novalidate>
+          <div class="form-row">
+            <div class="field">
+              <label class="field-label" for="signup-prenom">Prénom *</label>
+              <input class="input" type="text" id="signup-prenom" name="prenom" autocomplete="given-name" maxlength="80">
+            </div>
+            <div class="field">
+              <label class="field-label" for="signup-nom">Nom *</label>
+              <input class="input" type="text" id="signup-nom" name="nom" autocomplete="family-name" maxlength="80">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label" for="signup-courriel">Adresse courriel *</label>
+            <input class="input" type="email" id="signup-courriel" name="courriel" autocomplete="email" maxlength="190">
+          </div>
+          <div class="field">
+            <label class="field-label" for="signup-telephone">Téléphone</label>
+            <input class="input" type="tel" id="signup-telephone" name="telephone" autocomplete="tel">
+          </div>
+          <div class="field">
+            <label class="field-label" for="signup-password">Mot de passe *</label>
+            <input class="input" type="password" id="signup-password" name="motDePasse" autocomplete="new-password" aria-describedby="signup-password-help">
+            <p class="field-help" id="signup-password-help">8 caractères minimum, avec une majuscule, une minuscule et un chiffre.</p>
+          </div>
+          <div class="field">
+            <label class="field-label" for="signup-confirm">Confirmer le mot de passe *</label>
+            <input class="input" type="password" id="signup-confirm" name="confirmation" autocomplete="new-password">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Créer mon compte</button>
+        </form>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

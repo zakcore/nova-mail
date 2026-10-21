@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Contacts – Nova Mail</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <script src="js/ui.js" defer></script>
+  <script type="module" src="js/pages/contacts.js"></script>
+</head>
+<body>
+  <div class="app-frame">
+    <header class="app-header">
+      <button type="button" class="menu-toggle" aria-label="Ouvrir le menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+      <span class="app-brand">Nova Mail</span>
+      <div class="user-badge">
+        <span class="user-name" id="user-name"></span>
+        <span class="avatar avatar-32" id="user-avatar" aria-hidden="true"></span>
+      </div>
+    </header>
+    <nav class="sidebar" id="sidebar" aria-label="Navigation principale">
+      <ul class="sidebar-menu">
+          <li><a class="sidebar-link" href="nouveau.html" data-nav="nouveau">Nouveau message</a></li>
+          <li><a class="sidebar-link" href="reception.html" data-nav="reception">Réception <span class="badge-count" id="count-reception" hidden></span></a></li>
+          <li><a class="sidebar-link" href="envoyes.html" data-nav="envoyes">Envoyés</a></li>
+      </ul>
+      <p class="sidebar-section-title" id="folders-title">Dossiers</p>
+      <ul class="sidebar-menu sidebar-folders" id="folder-list" aria-labelledby="folders-title"></ul>
+      <button type="button" class="sidebar-add" data-open-modal="modal-new-folder">+ Nouveau dossier</button>
+      <ul class="sidebar-menu">
+          <li><a class="sidebar-link is-active" aria-current="page" href="contacts.html" data-nav="contacts">Contacts</a></li>
+          <li><a class="sidebar-link" href="profil.html" data-nav="profil">Profil</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <a class="sidebar-link" href="index.html" id="logout-link">Déconnexion</a>
+      </div>
+    </nav>
+    <main class="app-main">
+      <div class="page-head">
+        <h1 class="page-title">Contacts</h1>
+        <div class="page-head-actions">
+          <div role="search">
+            <label class="visually-hidden" for="search-contacts">Rechercher un contact</label>
+            <input class="input search-input" type="search" id="search-contacts" name="recherche" placeholder="Rechercher un contact" autocomplete="off">
+          </div>
+          <button type="button" class="btn btn-primary" data-open-modal="modal-contact" id="btn-add-contact">+ Ajouter</button>
+        </div>
+      </div>
+
+      <ul class="contact-list" id="contact-list" aria-label="Contacts" aria-busy="true"></ul>
+
+      <template id="contact-row-template">
+        <li class="contact-row">
+          <span class="avatar avatar-40" aria-hidden="true"></span>
+          <div class="contact-info">
+            <p class="contact-name"></p>
+            <p class="contact-meta"><a class="contact-email" href="nouveau.html"></a><span class="contact-phone"></span></p>
+          </div>
+          <div class="contact-actions">
+            <button type="button" class="btn btn-secondary btn-small" data-open-modal="modal-contact-edit" data-action="modifier">Modifier</button>
+            <button type="button" class="btn btn-danger btn-small" data-action="supprimer">Suppr.</button>
+          </div>
+        </li>
+      </template>
+
+      <nav class="pagination" id="pagination" aria-label="Pagination" hidden>
+        <button type="button" class="pagination-btn" data-page="precedent" disabled>‹ Précédent</button>
+        <span aria-hidden="true">·</span>
+        <span class="pagination-info"></span>
+        <span aria-hidden="true">·</span>
+        <button type="button" class="pagination-btn" data-page="suivant" disabled>Suivant ›</button>
+      </nav>
+    </main>
+  </div>
+
+  <div class="modal" id="modal-new-folder" role="dialog" aria-modal="true" aria-labelledby="modal-new-folder-title">
+    <form class="modal-panel" id="new-folder-form" novalidate>
+      <h2 class="modal-title" id="modal-new-folder-title">Nouveau dossier</h2>
+      <div class="field">
+        <label class="field-label" for="new-folder-name">Nom du dossier *</label>
+        <input class="input" type="text" id="new-folder-name" name="nom" maxlength="80" autocomplete="off">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" data-close-modal>Annuler</button>
+        <button type="submit" class="btn btn-primary">Créer</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="modal" id="modal-contact" role="dialog" aria-modal="true" aria-labelledby="modal-contact-title">
+    <form class="modal-panel contact-form" id="modal-contact-form" novalidate>
+      <h2 class="modal-title" id="modal-contact-title">Nouveau contact</h2>
+      <p class="list-state" data-role="chargement" hidden>Chargement…</p>
+      <div class="form-row">
+        <div class="field">
+          <label class="field-label" for="modal-contact-prenom">Prénom *</label>
+          <input class="input" type="text" id="modal-contact-prenom" name="prenom" maxlength="80">
+        </div>
+        <div class="field">
+          <label class="field-label" for="modal-contact-nom">Nom *</label>
+          <input class="input" type="text" id="modal-contact-nom" name="nom" maxlength="80">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="modal-contact-courriel">Adresse courriel *</label>
+        <input class="input" type="email" id="modal-contact-courriel" name="courriel" maxlength="190">
+      </div>
+      <p class="field-label">Photo de profil</p>
+      <div class="photo-field">
+        <span class="avatar avatar-48" data-role="apercu" aria-hidden="true">?</span>
+        <button type="button" class="btn btn-secondary btn-small" data-role="choisir-photo">Choisir une photo</button>
+      </div>
+      <div class="field">
+        <label class="field-label" for="modal-contact-photoProfil">URL de la photo</label>
+        <input class="input" type="url" id="modal-contact-photoProfil" name="photoProfil" maxlength="255" placeholder="https://…">
+      </div>
+      <p class="form-section-title">Téléphones</p>
+      <div class="field">
+        <label class="field-label" for="modal-contact-mobile">Mobile</label>
+        <input class="input" type="tel" id="modal-contact-mobile" name="mobile">
+      </div>
+      <div class="field">
+        <label class="field-label" for="modal-contact-fixe">Fixe</label>
+        <input class="input" type="tel" id="modal-contact-fixe" name="fixe">
+      </div>
+      <div class="field">
+        <label class="field-label" for="modal-contact-professionnel">Professionnel</label>
+        <input class="input" type="tel" id="modal-contact-professionnel" name="professionnel">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" data-close-modal>Annuler</button>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="modal" id="modal-contact-edit" role="dialog" aria-modal="true" aria-labelledby="modal-contact-edit-title">
+    <form class="modal-panel contact-form" id="modal-contact-edit-form" novalidate>
+      <h2 class="modal-title" id="modal-contact-edit-title">Modifier le contact</h2>
+      <p class="list-state" data-role="chargement" hidden>Chargement…</p>
+      <div class="form-row">
+        <div class="field">
+          <label class="field-label" for="modal-contact-edit-prenom">Prénom *</label>
+          <input class="input" type="text" id="modal-contact-edit-prenom" name="prenom" maxlength="80">
+        </div>
+        <div class="field">
+          <label class="field-label" for="modal-contact-edit-nom">Nom *</label>
+          <input class="input" type="text" id="modal-contact-edit-nom" name="nom" maxlength="80">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="modal-contact-edit-courriel">Adresse courriel *</label>
+        <input class="input" type="email" id="modal-contact-edit-courriel" name="courriel" maxlength="190">
+      </div>
+      <p class="field-label">Photo de profil</p>
+      <div class="photo-field">
+        <span class="avatar avatar-48" data-role="apercu" aria-hidden="true">?</span>
+        <button type="button" class="btn btn-secondary btn-small" data-role="choisir-photo">Choisir une photo</button>
+      </div>
+      <div class="field">
+        <label class="field-label" for="modal-contact-edit-photoProfil">URL de la photo</label>
+        <input class="input" type="url" id="modal-contact-edit-photoProfil" name="photoProfil" maxlength="255" placeholder="https://…">
+      </div>
+      <p class="form-section-title">Téléphones</p>
+      <div class="field">
+        <label class="field-label" for="modal-contact-edit-mobile">Mobile</label>
+        <input class="input" type="tel" id="modal-contact-edit-mobile" name="mobile">
+      </div>
+      <div class="field">
+        <label class="field-label" for="modal-contact-edit-fixe">Fixe</label>
+        <input class="input" type="tel" id="modal-contact-edit-fixe" name="fixe">
+      </div>
+      <div class="field">
+        <label class="field-label" for="modal-contact-edit-professionnel">Professionnel</label>
+        <input class="input" type="tel" id="modal-contact-edit-professionnel" name="professionnel">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" data-close-modal>Annuler</button>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="modal" id="modal-confirm" role="dialog" aria-modal="true" aria-labelledby="modal-confirm-title" aria-describedby="modal-confirm-text">
+    <div class="modal-panel">
+      <h2 class="modal-title" id="modal-confirm-title"></h2>
+      <p id="modal-confirm-text"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" data-close-modal>Annuler</button>
+        <button type="button" class="btn btn-danger-solid" id="modal-confirm-ok">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
