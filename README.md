@@ -139,4 +139,4 @@ postman/         collection, environnement et fichier d'exemple
 
 ## Publication
 
-Voir `PUBLICATION.md`.
+Version en ligne : **https://nova-mail-dz7s.onrender.com** (Render + Aiven for MySQL). Détails, redéploiement et limites : `PUBLICATION.md`.
